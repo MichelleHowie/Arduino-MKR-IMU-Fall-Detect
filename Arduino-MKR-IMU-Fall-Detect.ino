@@ -117,11 +117,8 @@ void setup() {
     while (1);
   }
 }
-void loop() {
-  if (!conn.connected()) {
-    reconnect();
-  }
-  conn.loop();//initialise the variables for storing x,y,z acceleration in the second state
+
+//initialise the variables for storing x,y,z acceleration in the second state
 float x2, y2, z2;
 
 void loop() {
