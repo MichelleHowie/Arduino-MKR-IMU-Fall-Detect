@@ -161,12 +161,12 @@ If you would like a more functional result with better accuracy to deploy in rea
 === Folder structure
 
 ....
- TDev_Arduino_IoT_Test_without_secrets              					=> Arduino sketch folder
-  ├── TDev_Arduino_IoT_Test_without_secrets.ino     					=> main Arduino file
- ├── IoTSensorData_OnDemand rode red flows (without client creds).json  => (optional) pre-loaded nodered flow you can import
- ├── IoTSensorData_OnDemand nodered flow diagram.png    				=> (optional) pre-loaded nodered flow you can import
- ├── IoTSensorData_OnDemand overall flow diagram.png   					=> schematic of the final working demo
- └── ReadMe.adoc         												=> this file
+ NodeRed Flows              					        => Folder containgin things for NodeRed Flows
+  ├── Arduino MKR IMU Fall Detect flows (no creds).json => (optional) pre-loaded nodered flow you can import
+  ├── NodeRed Flow 1 - Prov & B-Num.JPG  ... etc		=> (optional) screenshots of pre-loaded nodered flow you can import
+ ├── Arduino-MKR-IMU-Fall-Detect.ino                    => (optional) pre-loaded nodered flow you can import
+ ├── mkr imu fall detect demo flow.jpg    				=> schematic of the final working demo
+ └── ReadMe.adoc         								=> this file
 ....
 
 === License
