@@ -1,0 +1,173 @@
+:Author: michelle2minhye
+:Email: {michelle.howie@team.telstra.com}
+:Date: 16/06/2020
+:Revision: version#2
+:License: Public Domain
+
+= Project: Arduino-MKR-IMU-Fall-Detect
+
+This project allows you to set up remote alerts from your IoT device when your environment exceeds certain thresholds.
+
+We use the Arduino MKR NB 1500 and IMU Shield on Telstra's Cat-M1 network to alert when acceleration on the z axis is high (inferring a falling device!). This can be used in various examples that rely on instant alerts from falling objects (or people).
+
+The following Arduino sketch posts sensor data from the board as a json string to our Watson IoT broker.
+A nodered flow takes in requests from that broker, pulling the sensor data as global variables. 
+If the incoming data exceeds a pre-determined threshold, (i.e acceleration is >2 Gs) it will trigger an SMS alert.
+This SMS is sent via the TelstraDev Messaging API.  
+
+See the over all flow architecture: https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/health%20hack%20demo%20flow.jpg 
+
+This workshop was create for https://www.telstrahealth.com/content/telstrahealth/en/home/H4DH.html[Telstra Health Hack For Digital Healthcare] in November 2020 as part 3 of a series in IBM and TelstraDev IoT workshops.
+
+=== Requirements: 
+
+- https://dev.telstra.com/iot-marketplace/arduino-mkr-nb-1500[Arduino MKR NB 1500 board] 
+- https://store.arduino.cc/usa/arduino-mkr-imu-shield[Arduino IMU Sensor shield]
+- https://dev.telstra.com/content/what-connectivity-included-arduino-mkr-nb-1500-telstradev-iot-marketplace[CATM1-IoT Network]
+- https://dev.telstra.com/content/messaging-api[TelstraDev Messaging API]
+- https://nodered.org/docs/getting-started/ibmcloud[IBM Cloud NodeRed]
+- https://www.ibm.com/cloud/watson-iot-platform[Watson IoT Broker]
+
+
+Using the NB IOT network with a Telstra SIM, the MKR NB 1500 can be contacted from almost anywhere in Australia.
+You can send the data requests remotely.
+
+For part 1 of this workshop, learn how to set up your Messaging API with node red and program the Arduino board. 
+See the video recap of this tutorial recorded at IBM's Call For Code May 2020 Hackathon: https://video.ibm.com/recorded/126684032  
+
+In part 2 of this workshop, we connected the MKR Environmental Sensor Shield and created a node red flow that allowed users to send in an SMS to poll for live sensor data on demand. 
+See the video recap of this tutorial recorded at IBM's Call For Code June 2020 Hackathon: https://video.ibm.com/channel/23832688/video/cfc2020-telstradev-iotworkshop 
+Repo available here: https://github.com/MichelleHowie/IoTSensorData_OnDemand   
+
+== Step 1: Set-Up the Arduino Board
+To set-up your board, and connect to the NB IoT cellular network, 
+Follow the https://dev.telstra.com/sites/default/files/assets/Arduino-MKR-NB-1500-Starter-Guide.pdf[Arduino MKR NB 1500 Get Started Guide] on TelstraDev IoT Marketplace
+Make sure you have downloaded the Arduino libraries for the MKRNB, MKRIMU and MKRENV.
+
+== Step 2: Register the Devices in WatsonIoT
+Login to IBM Cloud
+
+go to catalogue and find the IoT platform: https://cloud.ibm.com/catalog/services/internet-of-things-platform 
+
+create a lite (free) plan
+
+go to devices and 'add device'
+
+enter a meaningful device type (e.g "arduinomkr")
+
+enter a meaningful name (e.g "mydevice1")
+
+all the other fields are optional
+
+select 'Finish'
+
+STOP! make sure you copy all the text on this page: ORG, DEVICE TYPE, DEVICE, AUTH METHOD, AUTH TOKEN
+IMPORTANT! you will not have access to the token again. save this somewhere you can access it. 
+If you lose your device token, you will need to add a new device and start again.
+
+you then need to create a new app from the left screen toolbar. Generate API Key
+
+save your api key and token. they will be needed in your node red instance
+
+change the role of this app to be backend trusted app
+
+== Step 3: Create NodeRed instance
+Go to https://nodered.org/
+
+Get started with NodeRed here:  https://developer.ibm.com/components/node-red/gettingstarted/
+
+If you have an Openshift account, you can run an instance in IBM cloud,
+You can select a local instance of nodered.
+
+Import the IoTSensorData_OnDemand rode red flows (without client creds).json file containing the demo flow:
+https://github.com/MichelleHowie/IoTSensorData_OnDemand/blob/master/IoTSensorData_OnDemand%20rode%20red%20flows%20(without%20client%20creds).json
+
+Here is a schematic of what it should look like: 
+https://github.com/MichelleHowie/IoTSensorData_OnDemand/blob/master/IoTSensorData_OnDemand%20nodered%20flow%20diagram.png
+
+In the "Get a Token" node, replace 'INSERT_HERE' with your valid TelstraDev Messaging API client credentials (see next step)
+
+Take note of the HTTP endpoint in the "SMS in" node, as you will need this when provisioning your Messaging API mobile number below
+
+== Step 4: Set-Up Messaging API
+
+Register your free developer account at https://dev.telstra.com.
+
+Login and navigate to the My apps page.
+
+Create your application by clicking the 'Add new app' button
+
+Select API Free Trial Product when configuring your application. This Product includes the https://dev.telstra.com/content/messaging-api[Telstra Messaging API] as well as other free trial APIs. Your application will be approved automatically. 
+There is a maximum of 100 free messages per developer. Additional messages and features can be purchased by creating a company and adding billing details. 
+
+Note your Client key and Client secret as these will be needed to provision a number for your application and for authentication (see NodeRed "Get a Token" node).
+
+Now head over to https://dev.telstra.com/content/messaging-api#section/Getting-Started[Getting Started] where you can find a postman collection as well as some links to sample apps and SDKs to get you started.
+
+Download the MessagingAPI-SDK in the language of your choice from https://github.com/telstra and follow the steps to:
+
+- Get an OAuth Token
+- Provision your Virtual Mobile Number Subscriptions (define the NotifyURL endpoint in this call). 
+Note the new subscription mobile number / MSISDN (e.g 61412345678) in the API call response. This is your virtual number
+- Send an SMS from your new virtual number
+
+The notifyURL in the Provisoning call will be the URL where replies to the provisioned number will be posted
+Telstra will deliver messages sent to that dedicated number to the notifyURL defined by you. 
+The notifyURL should be a complete URL address which includes the protocol identifier (e.g. https://). 
+It should also have a forward slash at the end if it is just a domain (e.g. http://www.example.com/).
+
+For this project, the notifyURL is based off of your nodered URL:
+['notify_url'] = "http://nr3-devsteve-test.toddler-ocp43-au-5290c8c8e5797924dc1ad5d1b85b37c0-0000.au-syd.containers.appdomain.cloud/api/sms";
+
+If that NotifyURL is the correct nodered http in endpoint, you should see the message payload of any inbound messages to your number appear in nodered 'SMS in' node
+it's then matched to the possible requests for sensor data (temp, UV, humidity, light)
+the most recent sensor data is pulled every 30 seconds from watson IoT and stored in the nodered global variables.
+The matched word + the matching global variables + time of latest data from sensors + information from the inbound text ('from' address) make up the response to send an SMS reply using another http request 
+(i.e another call to the TelstraDev Messaging API Gateway)
+
+
+BEFORE Deploying the NodeRed flow, make sure you have provisioned a mobile number with the TelstraDev Messaging API.
+Take note of this number, as it is the address for you to text your sensor data requests to.
+
+
+== Step 5: Prepare Arduino Sketch
+
+Download the .ino Arduino sketch from this repo and open in your Arduino IDE.
+
+Add your secrets from the Waston IoT platform (token, org, device name, device type).
+
+Carefully connect your IMU sensor shield by aligning the pins to the MKR NB 1500 board.
+
+Upload the code contained in this sketch on to your board
+
+== Step 6: Deploy and Test!
+Deploy the NodeRed Flow
+
+Send a text to your virtual number requesting sensor data. 
+
+If your text does not match with one of the key words (temp, humidity, light, UV) then you will be sent a help menu
+
+
+FIN!
+
+=== Folder structure
+
+....
+ TDev_Arduino_IoT_Test_without_secrets              					=> Arduino sketch folder
+  ├── TDev_Arduino_IoT_Test_without_secrets.ino     					=> main Arduino file
+ ├── IoTSensorData_OnDemand rode red flows (without client creds).json  => (optional) pre-loaded nodered flow you can import
+ ├── IoTSensorData_OnDemand nodered flow diagram.png    				=> (optional) pre-loaded nodered flow you can import
+ ├── IoTSensorData_OnDemand overall flow diagram.png   					=> schematic of the final working demo
+ └── ReadMe.adoc         												=> this file
+....
+
+=== License
+This project is released under a {Apache License 2.0} .
+
+=== Contributing
+To contribute to this project please contact michelle2minhye https://id.arduino.cc/michelle2minhye
+
+=== Help
+This document is written in the _AsciiDoc_ format, a markup language to describe documents.
+If you need help you can search the http://www.methods.co.nz/asciidoc[AsciiDoc homepage]
+or consult the http://powerman.name/doc/asciidoc[AsciiDoc cheatsheet]
