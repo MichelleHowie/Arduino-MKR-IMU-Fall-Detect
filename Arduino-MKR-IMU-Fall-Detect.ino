@@ -9,10 +9,10 @@
 const char PINNUMBER[]     = "";
 
 //find these in the Watson IoT client
-#define token "YOUR_TOKEN"
-#define ORG "YOUR_ORG"
-#define DEVICE_TYPE "YOUR_DEVICE_TYPE"
-#define DEVICE_ID "YOUR_ID"
+#define token "YOURS_HERE"
+#define ORG "YOURS_HERE"
+#define DEVICE_TYPE "YOURS_HERE"
+#define DEVICE_ID "YOURS_HERE"
 
 //broker url in here, demo is using eclipse test server
 char mqttBroker[]  = ORG ".messaging.internetofthings.ibmcloud.com";

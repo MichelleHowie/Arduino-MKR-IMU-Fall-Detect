@@ -1,4 +1,4 @@
-:Author: michelle2minhye
+:Author: michelle2minhye & developer steve
 :Email: {michelle.howie@team.telstra.com}
 :Date: 16/06/2020
 :Revision: version#2
@@ -17,7 +17,7 @@ This SMS is sent via the TelstraDev Messaging API.
 
 See the over all flow architecture: https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/health%20hack%20demo%20flow.jpg 
 
-This workshop was create for https://www.telstrahealth.com/content/telstrahealth/en/home/H4DH.html[Telstra Health Hack For Digital Healthcare] in November 2020 as part 3 of a series in IBM and TelstraDev IoT workshops.
+This workshop was created by DeveloperSteve Coochin and Michelle Howie for https://www.telstrahealth.com/content/telstrahealth/en/home/H4DH.html[Telstra Health Hack For Digital Healthcare] in November 2020 as part 3 of a series in IBM and TelstraDev IoT workshops.
 
 === Requirements: 
 
@@ -82,12 +82,23 @@ You can select a local instance of nodered.
 Import the nodered flow in json we have pre-prepared: 
 https://github.com/MichelleHowie/IoTSensorData_OnDemand/blob/master/IoTSensorData_OnDemand%20rode%20red%20flows%20(without%20client%20creds).json
 
-Here is a schematic of what it should look like: 
-https://github.com/MichelleHowie/IoTSensorData_OnDemand/blob/master/IoTSensorData_OnDemand%20nodered%20flow%20diagram.png
+We split the nodered flow into 4 parts (plus one introduction) to simplify. Click the link below to see a screenshot schematic of each:
 
-In the "Get a Token" node, replace 'INSERT_HERE' with your valid TelstraDev Messaging API client credentials (see next step)
 
-Take note of the HTTP endpoint in the "SMS in" node, as you will need this when provisioning your Messaging API mobile number below
+- https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/NodeRed%20Flows/NodeRed%20Flow%201%20-%20Prov%20%26%20B-Num.JPG[NodeRed Flow 1 - Prov & B-Num.JPG] is required to provision your TelstraDev Messaging API subscription with the NotifyURL 
+- https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/NodeRed%20Flows/NodeRed%20Flow%202%20-%20Request%20Env%20Details.JPG[NodeRed Flow 2 - Request ENV Details.JPG] This is from part 2 of this workshop where we took the data from our Environmental Shield and send it in a reply to any texts that come in matching specific data. It creates the body of the message to be replied to based on the SMS incoming request (msg.smsout.body), as well as taking the sender mobile and adding it to our destination number (msg.smsout.to). Both these variables are used in the Send SMS Flow You can skip this, or head to https://github.com/MichelleHowie/IoTSensorData_OnDemand[part 2 of this demo] to understand more.   
+- https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/NodeRed%20Flows/NodeRed%20Flow%203%20-%20Device%20Alerts.JPG[NodeRed Flow 3 - Device Alerts.JPG] this is the key logic of our fall detection demo. When our Arduino device with the sketch running outputs an event to our IoT broker (after the acceleration exceeds our thresholds to infer a fall) then this flow is triggered. It simply triggers an SMS to be send to our pre-defined contacts with a standard message body "A device has had a fall". You can customise this message. 
+- https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/NodeRed%20Flows/NodeRed%20Flow%204%20-%20Send%20SMS.JPG[NodeRed Flow 4 - Send SMS.JPG] This flow makes sure we have a valid OAuth token to use the TelstraDev Messaging API, then takes the SMS output (msg.smsout.body) and the destination number (msg.smsout.to) from either the Device Alerts flow or the Request ENV Details, whichever is triggered, and sends the SMS.    
+
+Once you have imported the NodeRed flow, create your notifyURL to be used as a webhook to receive inbound SMS to our virtual mobile number. For this project, the notifyURL is based off of your nodered URL. Take the start of the URL in your nodered browser, remove everything after the '.net' and add the identifier for your node that will receive the message and take action (in this case it is the 'SMS in' http endpoint node in the 'Request Env details' tab): e.g
+['notify_url'] = "https://your-stack.mybluemix.net/sms";
+Take note of this notifyURL as you will need this when provisioning your Messaging API mobile number below
+
+There are a few places where you will need to update our imported nodered flow with your own credentials:
+- In the Watson IoT nodes, replace 'INSERT_HERE' under Server Name, API Key and API Token with your valid IBM Cloud credentials (see previous step)
+- In the "Get a Token" node, replace 'INSERT_HERE' under Client Secret and CLient ID with your valid TelstraDev Messaging API client credentials (see next step)
+- In the "Prep SMS" and "B-Num reg" nodes, replace 'INSERT_HERE' with your mobile number that you want to receive the SMS alerts to.
+- In the "Prov Number" node, replace 'INSERT_HERE' with your NotifyURL. 
 
 == Step 4: Set-Up Messaging API
 
@@ -116,9 +127,6 @@ Telstra will deliver messages sent to that dedicated number to the notifyURL def
 The notifyURL should be a complete URL address which includes the protocol identifier (e.g. https://). 
 It should also have a forward slash at the end if it is just a domain (e.g. http://www.example.com/).
 
-For this project, the notifyURL is based off of your nodered URL:
-['notify_url'] = "http://nr3-devsteve-test.toddler-ocp43-au-5290c8c8e5797924dc1ad5d1b85b37c0-0000.au-syd.containers.appdomain.cloud/api/sms";
-
 If that NotifyURL is the correct nodered http in endpoint, you should see the message payload of any inbound messages to your number appear in nodered 'SMS in' node
 it's then matched to the possible requests for sensor data (temp, UV, humidity, light)
 the most recent sensor data is pulled every 30 seconds from watson IoT and stored in the nodered global variables.
@@ -143,11 +151,12 @@ Upload the code contained in this sketch on to your board
 == Step 6: Deploy and Test!
 Deploy the NodeRed Flow
 
-When your device moves suddenly, the acceleration in Gs will increase. Give it a go by shaking it lightly.
-
+When your device moves suddenly, the acceleration in Gs will increase. Give it a go by moving it up or down lightly.
 Then you should get a text with the pre-defined text.
 
-FIN!
+This is just a proof of concept for sending automated alerts based on change in acceleration of our remote device.
+We did not consider the direction of acceleration or fine-tune the thresholds to differentiate between a fall and the device being picked up for example.
+If you would like a more functional result with better accuracy to deploy in real fall detection scenarios, please spend the time to fine-tune the paramaters. But we hope this gives you a good start!
 
 === Folder structure
 
