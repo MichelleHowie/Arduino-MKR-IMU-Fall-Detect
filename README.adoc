@@ -17,7 +17,8 @@ This SMS is sent via the TelstraDev Messaging API.
 
 See the over all flow architecture: https://github.com/MichelleHowie/Arduino-MKR-IMU-Fall-Detect/blob/main/health%20hack%20demo%20flow.jpg 
 
-This workshop was created by DeveloperSteve Coochin and Michelle Howie for https://www.telstrahealth.com/content/telstrahealth/en/home/H4DH.html[Telstra Health Hack For Digital Healthcare] in November 2020 as part 3 of a series in IBM and TelstraDev IoT workshops.
+This workshop was created by DeveloperSteve Coochin and Michelle Howie for https://www.telstrahealth.com/content/telstrahealth/en/home/H4DH.html[Telstra Health Hack For Digital Healthcare] in November 2020 as part 3 of a series in IBM and TelstraDev IoT workshops. 
+Video of this workshop available here: https://www.youtube.com/watch?v=UebmjYumGoQ&feature=youtu.be&ab_channel=TelstraHealth 
 
 === Requirements: 
 
